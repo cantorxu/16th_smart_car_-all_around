@@ -78,6 +78,7 @@ void thre1(void);
 void get_HistGram(void);
 void  GetOSTUThreshold(uint8_t*);
 void map(void);
+void element_init(void);
 
 ///////////////////////////
 //基础找路找线函数的定义
@@ -86,6 +87,9 @@ uint8_t find_f(uint8_t a);
 void search_white_range();
 void find_all_connect();
 void find_road();
+uint8_t find_down(uint8_t line, uint8_t num);
+uint8_t find_up(uint8_t line, uint8_t num);
+void find_my_road();
 uint8_t find_continue(uint8_t i_start, uint8_t j_start);
 void ordinary_two_line(void);
 void image_main();

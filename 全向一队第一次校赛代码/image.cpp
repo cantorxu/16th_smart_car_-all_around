@@ -34,6 +34,26 @@ road_t my_road[CAMERA_H];
 uint8_t all_num = 0;//编号从0开始
 uint8_t road_end = FAR_LINE;//可视道路尽头
 
+////////////////////////////////////////////
+//功能：初始化
+//输入：
+//输出：
+//备注：将全局变量和数组初始化
+///////////////////////////////////////////
+void element_init(void)
+{
+	all_num = 0;
+	road_end = FAR_LINE;
+	for (uint8_t i = NEAR_LINE; i >= FAR_LINE; i--)
+	{
+		my_road[i].left = 0;
+		my_road[i].right = 0;
+		my_road[i].width = 0;
+		all_range[i].num = 0;
+		road_m[i].num = 0;
+	}
+}
+
 void THER(void)
 {
 	for (uint8_t i = 0; i < CAMERA_H; i++)
@@ -44,6 +64,19 @@ void THER(void)
 				IMG[i][j] = 0;
 			else
 				IMG[i][j] = 1;
+		}
+	}
+}
+
+void head_clear(void)
+{
+	uint8_t* my_map;
+	for (int i = 99; i >= 83; i--)
+	{
+		my_map = &IMG[i][0];
+		for (int j =36; j <= 106; j++)
+		{
+			*(my_map + j) = white;
 		}
 	}
 }
@@ -174,7 +207,7 @@ void find_road()
 					count++;
 			}
 		}
-		printf("count%d=%d", roadf_now, count);
+		printf("count(%d)=%d\n", roadf_now, count);
 		if (count > countmax)
 		{
 			//countmax = count;
@@ -230,9 +263,10 @@ void find_road()
 			break;
 		}
 	}
+	printf("road_end:%d\n", road_end);
 	for (uint8_t i = FAR_LINE; i < NEAR_LINE; i++)
 	{
-		printf("父节点为:%d,所有赛道数量为：%d,可能的道路数为%d\n", road_f,all_range[i].num,road_m[i].num);//meihang you yige liangge 
+		//printf("第%d行：父节点为:%d,所有赛道数量为：%d,可能的道路数为%d\n",i, road_f,all_range[i].num,road_m[i].num);//meihang you yige liangge 
 		for (int j = 0; j < road_m[i].num; j++)
 		{
 			//printf("%d",)
@@ -240,7 +274,7 @@ void find_road()
 			uint8_t right = road_m[i].range[j].right;
 			for (uint8_t k = left; k <= right; k++)
 			{
-				IMG[i][k] = gray;
+				IMG[i][k] = sky;
 			}
 			IMG[i][left] = red;
 			IMG[i][right] = blue;
@@ -248,11 +282,305 @@ void find_road()
 	}
 }
 
+////////////////////////////////////////////
+//功能：向下寻找连通
+//输入：哪行哪个白条
+//输出：下一行哪个白条
+//备注：
+///////////////////////////////////////////
+uint8_t find_down(uint8_t line, uint8_t num)
+{
+	//此函数用于向下寻找连通
+	uint8_t lined = line + 1;
+	white_range whiteline = road_m[line].range[num];
+	int wid_max = 0;
+	int wid = 0;
+	uint8_t num_return = 255;
+	//printf("num_now=%d,num_up=%d", roadp[lined].num,roadp[line].num);
+	for (uint8_t i = 0; i < road_m[lined].num; i++)
+	{
+		white_range whiteline_now = road_m[lined].range[i];
+		//printf("wid_now=%d", whiteline_now.width);
+		if (whiteline_now.left <= whiteline.right && whiteline_now.right >= whiteline.left)//重合
+		{
+			//printf("ok");
+			int left = whiteline_now.left < whiteline.left ? whiteline_now.left : whiteline.left;//最左
+			int right = whiteline_now.right > whiteline.right ? whiteline_now.right : whiteline.right;//最右
+			int wid1 = right - left;//共长
+			wid = (int)whiteline_now.width + (int)whiteline.width - wid1;//重叠面积
+			if (wid >= wid_max)//选择重叠最大的
+			{
+				num_return = i;
+				wid_max = wid;
+			}
+		}
+		//printf("wid_now=%d", wid);
+	}
+	return num_return;
+}
+
+////////////////////////////////////////////
+//功能：向上寻找连通
+//输入：哪行哪个白条
+//输出：上一行哪个白条
+//备注：
+///////////////////////////////////////////
+uint8_t find_up(uint8_t line, uint8_t num)
+{
+	//此函数用于向下寻找连通
+	uint8_t lineu = line - 1;
+	white_range whiteline = road_m[line].range[num];
+	int wid_max = 0;
+	int wid = 0;
+	uint8_t num_return = 255;
+
+	//printf("num_now=%d,num_up=%d", roadp[lineu].num,roadp[line].num);
+	for (uint8_t i = 0; i < road_m[lineu].num; i++)
+	{
+		white_range whiteline_now = road_m[lineu].range[i];
+		//printf("wid_now=%d\n", whiteline_now.width);
+		if (whiteline_now.left <= whiteline.right && whiteline_now.right >= whiteline.left)//重合
+		{
+			//printf("ok1");
+			int left = whiteline_now.left < whiteline.left ? whiteline_now.left : whiteline.left;//最左
+			int right = whiteline_now.right > whiteline.right ? whiteline_now.right : whiteline.right;//最右
+			int wid1 = right - left;//共长
+			wid = (int)whiteline_now.width + (int)whiteline.width - wid1;//重叠面积
+			if (wid >= wid_max)//选择重叠最大的
+			{
+				num_return = i;
+				wid_max = wid;
+			}
+		}
+		//printf("wid_now=%d", wid);
+	}
+	return num_return;
+}
+
+
+////////////////////////////////////////////
+//功能：找主干道
+//输入：road_m
+//输出：road
+//备注：road_m有岔路，为了简化后面的处理，选择一条主干道
+///////////////////////////////////////////
+void find_my_road()
+{
+	//找一个有岔路的行开始判断
+	uint8_t i_select = road_end + 30;
+	uint8_t num_now_f = 0;
+	uint8_t num_max_f = 0;
+	for (uint8_t i = road_end + 10; i < road_end + 40; i++)
+	{
+		num_now_f = road_m[i].num;
+		//printf("line=%d,num_now=%d\n", i, num_now_f);
+		if (num_now_f >= num_max_f)
+		{
+			num_max_f = num_now_f;
+			i_select = i;
+		}
+	}
+	uint8_t i_end = i_select;
+	for (uint8_t i = 30; i <= 60; i++)
+	{
+		//IMG[i_end][i] = purple;
+	}
+	//if (i_select == 0)
+	//{
+	//	//每行只有一个道
+	//	for (uint8_t i = NEAR_LINE; i >= road_end; i--)
+	//	{
+	//		road[i].leftside = roadp[i].whiteline[0].leftside;
+	//		road[i].rightside = roadp[i].whiteline[0].rightside;
+	//		road[i].width = road[i].rightside - road[i].leftside;
+	//	}
+	//	return;
+	//}
+
+	//printf("i_select=%d\n", i_select);
+	//uint8_t i_end = road_end + 10;
+	uint8_t temp = 5;
+	uint8_t mid_down = road_m[NEAR_LINE].range[down_mid_num].left / 2 + road_m[NEAR_LINE].range[down_mid_num].right / 2;
+	uint8_t left_down = mid_down - temp;// roadp[NEAR_LINE].whiteline[0].leftside;
+	uint8_t right_down = mid_down + temp;// roadp[NEAR_LINE].whiteline[0].rightside;
+	uint8_t num_total = road_m[i_end].num;//可以改变
+
+	uint8_t left_now = 0;
+	uint8_t right_now = 0;
+	uint8_t delta_now = 0;
+	uint8_t delta_min = 200;
+	uint8_t mid_now = 0;
+	int err_min = 9999;
+	int err_sum = 0;
+	//int err_thre = 10;
+	uint8_t k_select = MISS;
+	for (uint8_t k = 0; k < num_total; k++)
+	{
+		err_sum = 0;
+		white_range whiteline_now = road_m[i_end].range[k];
+
+		mid_now = whiteline_now.left / 2 + whiteline_now.right / 2;
+		left_now = mid_now - temp;// whiteline_now.leftside;
+		right_now = mid_now + temp;// whiteline_now.rightside;
+		delta_now = abs((int)mid_now - 70);
+		//连线，leftside画一次，rightside画一次
+
+		float base_k_l = ((float)left_now - (float)left_down) / ((float)i_end - (float)NEAR_LINE);
+		float base_k_r = ((float)right_now - (float)right_down) / ((float)i_end - (float)NEAR_LINE);
+		float base_k = ((float)mid_now - (float)mid_down) / ((float)i_end - (float)NEAR_LINE);
+		float l_ref = left_now;
+		float r_ref = right_now;
+		float ref = mid_now;
+		//for (uint8_t i = i_end; i < NEAR_LINE; i++)
+		//{
+		//	//IMG[i][(uint8_t)(l_ref + 0.5)] = purple;
+		//	if (IMG[i][(uint8_t)(l_ref + 0.5)] == 0 || IMG[i][(uint8_t)(r_ref + 0.5)] == 0)
+		//		err_sum++;
+		//	l_ref += base_k_l;
+		//	r_ref += base_k_r;
+		//}
+		for (uint8_t i = i_end; i < NEAR_LINE; i++)
+		{
+			if (IMG[i][(uint8_t)(ref + 0.5)] == 0 || IMG[i][(uint8_t)(l_ref + 0.5)] == 0 || IMG[i][(uint8_t)(r_ref + 0.5)] == 0)
+			{
+				err_sum++;
+			}
+			//IMG[i][(uint8_t)(ref + 0.5)] = purple;
+			l_ref += base_k_l;
+			r_ref += base_k_r;
+			ref += base_k;
+
+		}
+		//printf("err_sum=%d delta_now=%d\n", err_sum,delta_now);
+		if (err_sum < err_min)
+		{
+			/*if (delta_now<delta_min+10&&num_total>1)
+			{
+				err_min = err_sum;
+				k_select = k;
+				delta_min = delta_now;
+			}
+			else if(num_total==1)
+			{*/
+			err_min = err_sum;
+			k_select = k;
+			delta_min = delta_now;
+			//}
+		}
+		else if (err_sum == err_min && delta_now < delta_min)
+		{
+			//两者相等看斜率
+			err_min = err_sum;
+			k_select = k;
+			delta_min = delta_now;
+		}
+	}
+	//printf("k_select=%d", k_select);
+	uint8_t num_now = k_select;
+	for (uint8_t i = i_end; i <= NEAR_LINE; i++)
+	{
+		my_road[i].left = road_m[i].range[num_now].left;
+		my_road[i].right = road_m[i].range[num_now].right;
+		my_road[i].width = my_road[i].right - my_road[i].left;
+		num_now = find_down(i, num_now);//迭代出下一行的
+		//printf("line=%d,num_select=%d\n",i,num_now);
+	}
+	//上方用findup连接上
+	num_now = k_select;
+	for (uint8_t i = i_end; i > FAR_LINE; i--)
+	{
+		num_now = find_up(i, num_now);
+		if (num_now == 255)
+		{
+			road_end = i + 1;
+			break;
+		}
+		else
+		{
+			i--;
+			my_road[i].left = road_m[i].range[num_now].left;
+			my_road[i].right = road_m[i].range[num_now].right;
+			my_road[i].width = my_road[i].right - my_road[i].left;
+			i++;
+		}
+	}
+	
+	for (uint8_t i = NEAR_LINE; i > FAR_LINE; i--)
+	{
+		uint8_t j_start = my_road[i].left;
+		uint8_t j_end = my_road[i].right;
+		for (uint8_t j = j_start; j <= j_end; j++)
+		{
+			if(IMG[i][j] != purple)
+			IMG[i][j] = gray;
+		}
+	}
+	for (uint8_t i = 0; i < CAMERA_W; i++)
+	{
+		IMG[i_end][i] = gray;
+	}
+	printf("\n");
+}
+
+////////////////////////////////////////////
+//功能：识别是否为岔道
+//输入：
+//输出：0为非岔道，1为岔道
+//备注：
+///////////////////////////////////////////
+uint8_t if_fork(void)
+{
+	uint8_t i_start = FAR_LINE;
+	uint8_t i_end = 0;
+	uint8_t count = 0;
+	uint8_t road_num = 0;
+	uint8_t num_max = 0;
+	for (uint8_t i = i_start; i < i_start + 30; i++)
+	{
+		road_num = road_m[i].num;
+		//printf("line=%d,num_now=%d\n", i, num_now_f);
+		if (road_num == 2)
+		{
+			i_end = i;
+		}
+		if (road_m[i].num == 1)
+		{
+			count++;
+		}
+		if (count >= 8)//有足够多的单道路时跳出循环
+		{
+			break;
+		}
+	}
+	count = 0;
+	for (uint8_t i = i_start; i <= i_end; i++)
+	{
+		printf("第一条的长度为%d，第二条的长度为%d\n", road_m[i].range[0].width, road_m[i].range[1].width);
+		if (road_m[i].range[0].width > 40 && road_m[i].range[1].width > 40)
+		{
+			count++;
+		}
+	}
+	if (count >= 7)
+	{
+		printf("岔道已识别\n");
+		for (uint8_t i = 30; i < 100; i++)
+		{
+			IMG[i_end][i] = purple;
+		}
+	}
+	return 0;
+}
 
 void image_main(void)
 {
+	element_init();
 	THER();
+	head_clear();
 	search_white_range();
 	find_all_connect();
 	find_road();
+	//uint8_t my_fork = if_fork();
+	find_my_road();
+	printf("******************************************\n");
 }
