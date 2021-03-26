@@ -8,16 +8,16 @@
 #include "image.h"
 
 #define MISS 255
-#define CAMERA_H  100                            //图片高度
-#define CAMERA_W  140                           //图片宽度
+#define CAMERA_H  60                            //图片高度
+#define CAMERA_W  130                           //图片宽度
 #define FAR_LINE 1//图像处理上边界
-#define NEAR_LINE 95//图像处理下边界
+#define NEAR_LINE 55//图像处理下边界
 #define LEFT_SIDE 0//图像处理左边界
-#define RIGHT_SIDE 139//图像处理右边界
+#define RIGHT_SIDE 129//图像处理右边界
 #define MISS 255
-#define white_num_MAX 10//每行最多允许白条数
-#define CHANGED_H 100
-#define CHANGED_W 140
+#define white_num_MAX 8//每行最多允许白条数
+#define CHANGED_H 60
+#define CHANGED_W 130
 
 //#define our_test bool
 #define our_test uint8_t
@@ -31,7 +31,7 @@
 #define gray  MISS
 #define purple 6
 #define sky 7
-#define color 9
+#define cyan 8
 ///////////////////////////
 
 extern uint8_t IMG[CAMERA_H][CAMERA_W];//二值化图像数组
@@ -76,7 +76,7 @@ void head_clear(void);
 void THRE(void);
 void thre1(void);
 void get_HistGram(void);
-void  GetOSTUThreshold(uint8_t*);
+void GetOSTUThreshold(float* HistGram);
 void map(void);
 void element_init(void);
 
@@ -122,6 +122,7 @@ void check_right_line(uint8_t start, uint8_t end);
 void Cal_Line(float k, float b, uint8_t start_point, uint8_t end_point, uint8_t ArryName);
 void make_line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2);
 void paint(void);
+void draw_line(uint8_t line);
 
 ///////////////////////////
 
@@ -152,6 +153,7 @@ uint8_t roof(void);
 ///////////////////////////
 //基本处理函数
 
+void THRE();
 void denoise(void);
 uint8_t define_my_way(uint8_t line);
 void if_connect(void);

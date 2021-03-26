@@ -14,7 +14,8 @@
 #define gray  8
 #define purple 6
 #define sky 7
-CvScalar col_white, col_black, col_blue, col_red, col_green, col_gray, col_purple, col_sky;
+#define cyan 8
+CvScalar col_white, col_black, col_blue, col_red, col_green, col_gray, col_purple, col_sky, col_cyan;
 ////////////////////////////////////////////////////////////////////////////////////
 #define change_speed 2								//图片切换速度
 #define NUMOFSTART 0								//起始图片标号
@@ -62,6 +63,7 @@ void col_init(void)
 	col_red.val[0] = 0;     col_red.val[1] = 0;     col_red.val[2] = 255;
 	col_gray.val[0] = 100;     col_gray.val[1] = 100;     col_gray.val[2] = 100;
 	col_sky.val[0] = 255; col_sky.val[1] = 255; col_sky.val[2] = 102;
+	col_cyan.val[0] = 230; col_cyan.val[1] = 224; col_cyan.val[2] = 176;
 }
 
 void create_window(void)
@@ -142,15 +144,15 @@ void load_pic(void)
 	//sprintf(path, "D:\\QQ文件\\文件下载\\智能车俱乐部\\采集图片\\2021.1.9新赛道采集\\入岔路-左\\%d.jpeg", pic_num);
 	//sprintf(path, "D:\\QQ文件\\文件下载\\智能车俱乐部\\采集图片\\11.16赛道采集\\十字\\%d.jpeg", pic_num);
 	//sprintf(path, "D:\\QQ文件\\文件下载\\智能车俱乐部\\采集图片\\2021.1.9新赛道采集\\环岛\\%d.jpeg", pic_num);
-	//D:\\QQ文件\\文件下载\\智能车俱乐部\\采集图片\\2021.1.9新赛道采集\\入岔路-左
-	//D:\\QQ文件\\文件下载\\智能车俱乐部\\采集图片\\2021.1.9新赛道采集\\出库
-	//D:\\QQ文件\\文件下载\\智能车俱乐部\\全向行进组\\2021.1.13赛道\\岔路平移
-	//D:\\QQ文件\\文件下载\\智能车俱乐部\\全向行进组\\2021.1.13赛道\\岔路斜入
-	//D:\\QQ文件\\文件下载\\智能车俱乐部\\采集图片\\2021.1.9新赛道采集\\入岔路-右
-	//D:\\QQ文件\\文件下载\\智能车俱乐部\\采集图片\\11.16赛道采集\\S型弯道
+	sprintf(path, "C:\\Users\\12737\\PycharmProjects\\pythonProject\\总钻风130+60\\斜入十字\\%d.jpeg", pic_num);
+	//sprintf(path, "C:\\Users\\12737\\PycharmProjects\\pythonProject\\总钻风130+60\\斑马线\\%d.jpeg", pic_num);
+	//sprintf(path, "C:\\Users\\12737\\PycharmProjects\\pythonProject\\总钻风130+60\\十字\\%d.jpeg", pic_num);
+	//sprintf(path, "C:\\Users\\12737\\PycharmProjects\\pythonProject\\总钻风130+60\\斑马线\\%d.jpeg", pic_num);
+	//sprintf(path, "D:\\QQ文件\\文件下载\\智能车俱乐部\\全向一队采图2021.3.15\\全向一队采图2021.3.15\\大弯道+入车库\\%d.jpeg", pic_num);
 	//sprintf(path, "D:\\QQ文件\\文件下载\\智能车俱乐部\\全向一队采图2021.3.15\\全向一队采图2021.3.15\\岔路右+S弯道\\%d.jpeg", pic_num);
 	//sprintf(path, "D:\\QQ文件\\文件下载\\智能车俱乐部\\全向一队采图2021.3.15\\全向一队采图2021.3.15\\全向一队首次采图\\%d.jpeg", pic_num);
-	sprintf(path, "D:\\QQ文件\\文件下载\\智能车俱乐部\\全向一队采图2021.3.15\\全向一队采图2021.3.15\\岔路左+十字\\%d.jpeg", pic_num);
+	//sprintf(path, "D:\\QQ文件\\文件下载\\智能车俱乐部\\全向一队采图2021.3.15\\全向一队采图2021.3.15\\岔路左+十字\\%d.jpeg", pic_num);
+	//sprintf(path, "D:\\QQ文件\\文件下载\\智能车俱乐部\\全向一队采图2021.3.15\\全向一队采图2021.3.15\\环岛+十字\\%d.jpeg", pic_num);
 	//sprintf(path, "C:\\Users\\12737\\PycharmProjects\\pythonProject\\小钻风2021.3.19号采图\\十字一\\%d.jpeg", pic_num);
 	//sprintf(path, "D:\\QQ文件\\文件下载\\智能车俱乐部\\采集图片\\11.30赛道采集\\重复图\\%d.jpeg", pic_num);
 	//D:\\QQ文件\\文件下载\\智能车俱乐部\\采集图片\\11.16赛道采集\\shizi
@@ -173,10 +175,10 @@ void load_pic(void)
 		for (j = 0; j < CAMERA_W; j++)
 		{
 			s = cvGet2D(pImg_1, i, j);
-			temp_IMG[i][j] = s.val[0];
+			IMG[i][j] = s.val[0];
 		}
 	}
-	fullBuffer = &temp_IMG[0][0];
+	fullBuffer = &IMG[0][0];
 
 	//head_clear();
 	//THRE();
@@ -214,6 +216,7 @@ void show_pic(void)
 				if (*(map) == purple)s = col_purple;
 				if (*(map) == gray) s = col_gray;
 				if (*(map) == sky) s = col_sky;
+				if (*(map) == cyan) s = col_cyan;
 			}
 			cvSet2D(pImg_2, i, j, s);
 			map++;
@@ -229,6 +232,8 @@ void show_pic(void)
 		}
 	}
 	sprintf(my_text, "picture %d", pic_num);
+	/*printf("picturn %d\n", pic_num);
+	printf("******************************************\n");*/
 	cvText(pImg_2, my_text, 5, CAMERA_H + 20, 0.4, 0.4, 1);
 	//以上为“this is picture x” 的刷新部分//////////////////////////////////
 	cvShowImage("当前图", pImg_2);
